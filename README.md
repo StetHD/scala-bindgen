@@ -4,15 +4,18 @@
 
 **This is work in progress. It may even not compile, or fails copiously! :-(**
 
-A native binding generator for the Scala language.
+A native binding generator for the [Scala] language.
+See also: [Scala Native]
 
 scala-bindgen was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
 
 ## How it works
 
 * employs LLVM for parsing C source files
-* LLVM builds an AST which represent all sources parsed
+* LLVM builds an AST which represents all sources parsed
 * bindgen visits the AST and generates Scala sources
 
+[Scala]: http://scala-lang.org
+[Scala Native]: http://github.com/scala-native/scala-native
 [Clay's bindgen]: http://github.com/jckarter/clay/blob/master/tools/bindgen.clay
 [Rust's bindgen]: http://github.com/crabtw/rust-bindgen
