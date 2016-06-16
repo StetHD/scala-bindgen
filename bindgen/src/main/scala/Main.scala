@@ -1,4 +1,10 @@
-package demo
+package bindgen
+
+import scalanative.native._
+import scalanative.libc.stdlib._
+
+import scala.collection.Seq
+import scala.collection.mutable
 
 
 object Main {
@@ -48,11 +54,55 @@ object Main {
       |""".stripMargin
 
 
+  case class Args (
+    val arg_file: String,
+    val arg_clang_args: Seq[String],
+    val flag_link: Option[String],
+    val flag_output: String,
+    val flag_match: Option[String],
+    val flag_builtins: Boolean,
+    val flag_emit_clang_ast: Boolean,
+    val flag_override_enum_type: String,
+    val flag_ctypes_prefix: String,
+    val flag_use_core: Boolean,
+    val flag_remove_prefix: Option[String],
+    val flag_no_derive_debug: Boolean,
+    val flag_no_rust_enums: Boolean
+  )
+
+
+
+import scala.scalanative.unistd.getopt._
+
   def main(args: Array[String]): Unit = {
-    println(USAGE)
+    //int c;
+    //int digit_optind = 0;
+    //int aopt = 0, bopt = 0;
+    //char *copt = 0, *dopt = 0;
+
+    val long_options: Array[option] = Array(
+        new option(c"add",     1, stackalloc[CInt],    0),
+        new option(c"append",  0, stackalloc[CInt],    0),
+        new option(c"delete",  1, stackalloc[CInt],    0),
+        new option(c"verbose", 0, stackalloc[CInt],    0),
+        new option(c"create",  1, stackalloc[CInt],    'c'),
+        new option(c"file",    1, stackalloc[CInt],    0),
+        new option(null,       0, null,                0)
+    )
+  
+    val option_index = 0;
+    var c: Int = 0
+    while ((c = getopt_long(args.length, args, c"abc:d:012", long_options, option_index)) != -1) {
+      // val this_option_optind = optind ? optind : 1;
+      // switch (c) {
+      //
+      // }
+    }
+
+
   }
 }
-
+ 
 //   def args_to_opts(args: Args): Builder {
 //     var builder = Builder::new(args.arg_file);
 //     builder.emit_ast(args.flag_emit_clang_ast)
@@ -284,6 +334,15 @@ object Main {
 //     Framework,
 // }
 
+@struct
+object LinkType {
+  type enum = Int
+  final val Static    : LinkType.enum = 1 // Do a static link to the library.
+  final val Dynamic   : LinkType.enum = 2 // Do a dynamic link to the library.
+  final val Framework : LinkType.enum = 3 // Link to a MacOS Framework.
+}
+
+
 /** Trait used internaly to log things with context like the C file line number.*/
 trait Logger { //FIXME : std::fmt::Debug {
   def error(msg: String) = println(s"ERROR: ${msg}")
@@ -292,8 +351,9 @@ trait Logger { //FIXME : std::fmt::Debug {
   def debug(msg: String) = println(s"DEBUG: ${msg}")
 }
 
+
 /** Contains the generated code.*/
 class Bindings {
-  val module    : Any = ??? // ast::Mod,
-  val attributes: Any = ??? // Vec<ast::Attribute>,
+  val module    : Any = null // ast::Mod,
+  val attributes: Any = null // Vec<ast::Attribute>,
 }
