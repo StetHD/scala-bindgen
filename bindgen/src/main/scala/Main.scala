@@ -9,7 +9,8 @@ import scala.collection.mutable
 
 object Main {
 
-  private val USAGE =
+  final private val OPTIONS = 7
+  final private val USAGE =
     s"""|Generate C bindings for Scala Native.
       |Usage:
       |  bindgen [options] <file> [-- <clang-args>...]
@@ -75,29 +76,30 @@ object Main {
 import scala.scalanative.unistd.getopt._
 
   def main(args: Array[String]): Unit = {
-    //int c;
-    //int digit_optind = 0;
-    //int aopt = 0, bopt = 0;
-    //char *copt = 0, *dopt = 0;
+    val long_options = malloc(sizeof[option] * OPTIONS).cast[Ptr[option]]
+    long_options(0) = new option(c"add",     1, stackalloc[CInt],   0)
+    long_options(1) = new option(c"append",  0, stackalloc[CInt],   0)
+    long_options(2) = new option(c"delete",  1, stackalloc[CInt],   0)
+    long_options(3) = new option(c"verbose", 0, stackalloc[CInt],   0)
+    long_options(4) = new option(c"create",  1, stackalloc[CInt], 'c')
+    long_options(5) = new option(c"file",    1, stackalloc[CInt],   0)
+    long_options(6) = new option(null,       0, null,               0)
 
-    val long_options: Array[option] = Array(
-        new option(c"add",     1, stackalloc[CInt],    0),
-        new option(c"append",  0, stackalloc[CInt],    0),
-        new option(c"delete",  1, stackalloc[CInt],    0),
-        new option(c"verbose", 0, stackalloc[CInt],    0),
-        new option(c"create",  1, stackalloc[CInt],    'c'),
-        new option(c"file",    1, stackalloc[CInt],    0),
-        new option(null,       0, null,                0)
-    )
-  
-    val option_index = 0;
-    var c: Int = 0
-    while ((c = getopt_long(args.length, args, c"abc:d:012", long_options, option_index)) != -1) {
-      // val this_option_optind = optind ? optind : 1;
-      // switch (c) {
-      //
-      // }
-    }
+    val cargs: Ptr[CString] = malloc(sizeof[CString] * args.length).cast[Ptr[CString]]
+    //args.zipWithIndex.foreach { case (arg, idx) => cargs(idx) = new CQuote(StringContext(args(idx))).c }
+    cargs(0) = new CQuote(StringContext("Hi")).c
+
+    val option_index = stackalloc[CInt]
+
+    var c: CInt = 0
+    c = getopt_long(args.length, cargs, c"abc:d:012", long_options, option_index)
+
+    // while ( (c = getopt_long(args.length, cargs, c"abc:d:012", long_options, option_index)) != -1) {
+    //   // val this_option_optind = optind ? optind : 1;
+    //   // switch (c) {
+    //   //
+    //   // }
+    // }
 
 
   }
