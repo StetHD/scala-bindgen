@@ -2,6 +2,7 @@ package bindgen
 
 import scalanative.native._
 import scalanative.libc.stdlib._
+import scala.scalanative.unistd.getopt._
 
 import scala.collection.Seq
 import scala.collection.mutable
@@ -9,7 +10,6 @@ import scala.collection.mutable
 
 object Main {
 
-  final private val OPTIONS = 7
   final private val USAGE =
     s"""|Generate C bindings for Scala Native.
       |Usage:
@@ -48,51 +48,61 @@ object Main {
       |                              [default: std::os::raw]
       |  --remove-prefix=<prefix>    Prefix to remove from all the symbols, like
       |                              `libfoo_`. The removal is case-insensitive.
-      |  --no-derive-debug           Disable `derive(Debug)` for all generated types.
-      |  --no-rust-enums             Convert C enums to Rust constants instead of enums.
+      |  --no-scala-enums            Convert C enums to Scala constants instead of enums.
       |  --dont-convert-floats       Disables the convertion of C `float` and `double`
-      |                              to Rust `f32` and `f64`.
+      |                              to Scala `f32` and `f64`.
       |""".stripMargin
 
 
   case class Args (
-    val arg_file: String,
-    val arg_clang_args: Seq[String],
-    val flag_link: Option[String],
-    val flag_output: String,
-    val flag_match: Option[String],
-    val flag_builtins: Boolean,
-    val flag_emit_clang_ast: Boolean,
+    val arg_file               : String,
+    val arg_clang_args         : Seq[String],
+    val flag_link              : Option[String],
+    val flag_output            : String,
+    val flag_match             : Option[String],
+    val flag_builtins          : Boolean,
+    val flag_emit_clang_ast    : Boolean,
     val flag_override_enum_type: String,
-    val flag_ctypes_prefix: String,
-    val flag_use_core: Boolean,
-    val flag_remove_prefix: Option[String],
-    val flag_no_derive_debug: Boolean,
-    val flag_no_rust_enums: Boolean
+    val flag_ctypes_prefix     : String,
+    val flag_use_core          : Boolean,
+    val flag_remove_prefix     : Option[String],
+    val flag_no_scala_enums    : Boolean
   )
 
 
-
-import scala.scalanative.unistd.getopt._
-
   def main(args: Array[String]): Unit = {
-    val long_options = malloc(sizeof[option] * OPTIONS).cast[Ptr[option]]
-    long_options(0) = new option(c"add",     1, stackalloc[CInt],   0)
-    long_options(1) = new option(c"append",  0, stackalloc[CInt],   0)
-    long_options(2) = new option(c"delete",  1, stackalloc[CInt],   0)
-    long_options(3) = new option(c"verbose", 0, stackalloc[CInt],   0)
-    long_options(4) = new option(c"create",  1, stackalloc[CInt], 'c')
-    long_options(5) = new option(c"file",    1, stackalloc[CInt],   0)
-    long_options(6) = new option(null,       0, null,               0)
+    val longOptions = Seq(new option(c"link",               1, null,   'l'), 
+                          new option(c"output",             1, null,   'o'), 
+                          new option(c"match",              1, null,   'm'), 
+                          new option(c"builtins",           0, null,   'b'), 
+                          new option(c"emit-clang-ast",     0, null,   'e'), 
+                          new option(c"override-enum-type", 1, null,   'T'), 
+                          new option(c"use-core",           0, null,   'u'), 
+                          new option(c"ctypes-prefix",      1, null,   'c'), 
+                          new option(c"remove-prefix",      1, null,   'r'), 
+                          new option(c"no-scala-enums",     0, null,   'S'), 
+                          new option(null,                  0, null,     0))
 
-    val cargs: Ptr[CString] = malloc(sizeof[CString] * args.length).cast[Ptr[CString]]
-    //args.zipWithIndex.foreach { case (arg, idx) => cargs(idx) = new CQuote(StringContext(args(idx))).c }
-    cargs(0) = new CQuote(StringContext("Hi")).c
+    val long_options = malloc(sizeof[option] * longOptions.size).cast[Ptr[option]]
+    longOptions.zipWithIndex.foreach { case (options, idx) => long_options(0) = options }
+
+    val argc = 16 //FIXME: args.length
+    val cargs: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
+    //FIXME: args.zipWithIndex.foreach { case (arg, idx) => cargs(idx) = new CQuote(StringContext(args(idx))).c }
+    cargs( 0) = new CQuote(StringContext("--link")).c;               cargs( 1) = new CQuote(StringContext("(link)")).c
+    cargs( 2) = new CQuote(StringContext("--output")).c;             cargs( 3) = new CQuote(StringContext("(output)")).c
+    cargs( 4) = new CQuote(StringContext("--match")).c;              cargs( 5) = new CQuote(StringContext("(match)")).c
+    cargs( 6) = new CQuote(StringContext("--builtins")).c
+    cargs( 7) = new CQuote(StringContext("--emit-clang-ast")).c
+    cargs( 8) = new CQuote(StringContext("--override-enum-type")).c; cargs( 9) = new CQuote(StringContext("(override-enum-type)")).c
+    cargs(10) = new CQuote(StringContext("--use-core")).c
+    cargs(11) = new CQuote(StringContext("--ctypes-prefix")).c;      cargs(12) = new CQuote(StringContext("(ctypes-prefix)")).c
+    cargs(13) = new CQuote(StringContext("--remove-prefix")).c;      cargs(14) = new CQuote(StringContext("(remove-prefix)")).c
+    cargs(15) = new CQuote(StringContext("--no-scala-debug")).c
 
     val option_index = stackalloc[CInt]
-
     var c: CInt = 0
-    c = getopt_long(args.length, cargs, c"abc:d:012", long_options, option_index)
+    c = getopt_long(args.length, cargs, c"l:o:m:beT:uc:r:S", long_options, option_index)
 
     // while ( (c = getopt_long(args.length, cargs, c"abc:d:012", long_options, option_index)) != -1) {
     //   // val this_option_optind = optind ? optind : 1;
@@ -100,7 +110,6 @@ import scala.scalanative.unistd.getopt._
     //   //
     //   // }
     // }
-
 
   }
 }
@@ -114,7 +123,7 @@ import scala.scalanative.unistd.getopt._
 //                               .collect::<Vec<_>>())
 //            .use_core(args.flag_use_core)
 //            .derive_debug(!args.flag_no_derive_debug)
-//            .rust_enums(!args.flag_no_rust_enums)
+//            .scala_enums(!args.flag_no_scala_enums)
 //            .override_enum_ty(args.flag_override_enum_type);
 //     for arg in args.arg_clang_args {
 //         builder.clang_arg(arg);
@@ -212,9 +221,9 @@ import scala.scalanative.unistd.getopt._
 //     self
 //   }
 //  
-//   /// Control if bindgen should convert the C enums to rust enums or rust constants.
-//   def rust_enums(&mut self, value: bool): Builder = {
-//     self.options.rust_enums = value;
+//   /// Control if bindgen should convert the C enums to scala enums or scala constants.
+//   def scala_enums(&mut self, value: bool): Builder = {
+//     self.options.scala_enums = value;
 //     self
 //   }
 //  
@@ -257,7 +266,7 @@ import scala.scalanative.unistd.getopt._
 //   /// Defines if we should convert float and double to f32 and f64.
 //   ///
 //   /// The format is [not defined](https://en.wikipedia.org/wiki/C_data_types#Basic_types),
-//   /// but is the same as in rust in all the supported platforms.
+//   /// but is the same as in scala in all the supported platforms.
 //   def dont_convert_floats(&mut self): Builder = {
 //     self.options.convert_floats = false;
 //     self
@@ -279,7 +288,7 @@ import scala.scalanative.unistd.getopt._
 // class BindgenOptions {
 //     pub match_pat: Vec<String>,
 //     pub builtins: bool,
-//     pub rust_enums: bool,
+//     pub scala_enums: bool,
 //     pub links: Vec<(String, LinkType)>,
 //     pub emit_ast: bool,
 //     pub fail_on_unknown_type: bool,
@@ -309,7 +318,7 @@ import scala.scalanative.unistd.getopt._
 //         BindgenOptions {
 //             match_pat: Vec::new(),
 //             builtins: false,
-//             rust_enums: true,
+//             scala_enums: true,
 //             links: Vec::new(),
 //             emit_ast: false,
 //             fail_on_unknown_type: true,
