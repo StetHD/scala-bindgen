@@ -88,14 +88,17 @@ object Main {
     long_options( 9) = new option(c"no-scala-enums",     0, null,   'S')
     long_options(10) = new option(null,                  0, null,     0)
 
-    var c: CInt = 0
     val option_index: Ptr[CInt] = stackalloc[CInt]
-
     val f = fopen(c"getopt.txt", c"w")
-    while ( (c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)) != -1) {
-      //val this_option_optind = optind ? optind : 1;
-      fprintf(f, c"option %c\n", c)
+    def loop: Unit = {
+      while(true) {
+        val c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
+        if(c == -1) return
+        fprintf(f, c"option %d\n", c)
+      }
     }
+    loop
+    fprintf(f, c"done.\n")
   }
 }
 
