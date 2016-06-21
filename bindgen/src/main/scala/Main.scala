@@ -1,110 +1,101 @@
 package bindgen
 
+// standard Scala Native imports
 import scalanative.native._
 import scalanative.libc.stdlib._
-import scala.scalanative.unistd.getopt._
+import scala.scalanative.libc.stdlib._
 
-import scala.collection.Seq
-import scala.collection.mutable
+import scala.scalanative.libc.getopt._
+
+
+// other imports
+//+++ import scala.collection.Seq
+//+++ import scala.collection.mutable
 
 
 object Main {
-
-  final private val USAGE =
-    s"""|Generate C bindings for Scala Native.
-      |Usage:
-      |  bindgen [options] <file> [-- <clang-args>...]
-      |  bindgen (-h | --help)
-      |Options:
-      |  <clang-args>                 Options passed directly to clang.
-      |  -h, --help                   Display this help message.
-      |  --link=<library>             Link to a dynamic library, can be provided multiple times.
-      |                               <library> is in the format `[kind=]lib`, where `kind` is
-      |                               one of `static`, `dynamic` or `framework`.
-      |  --output=<output>            Write bindings to <output> (- is stdout).
-      |                               [default: -]
-      |  --match=<name>               Only output bindings for definitions from files
-      |                               whose name contains <name>
-      |                               If multiple -match options are provided, files
-      |                               matching any rule are bound to.
-      |  --builtins                   Output bindings for builtin definitions
-      |                               (for example __builtin_va_list)
-      |  --emit-clang-ast             Output the ast (for debugging purposes)
-      |  --override-enum-type=<type>  Override enum type, type name could be
-      |                                 uchar
-      |                                 schar
-      |                                 ushort
-      |                                 sshort
-      |                                 uint
-      |                                 sint
-      |                                 ulong
-      |                                 slong
-      |                                 ulonglong
-      |                                 slonglong
-      |  --use-core                  Use `core` as a base crate for `Option` and such.
-      |                              See also `--ctypes-prefix`.
-      |  --ctypes-prefix=<prefix>    Use this prefix for all the types in the generated
-      |                              code.
-      |                              [default: std::os::raw]
-      |  --remove-prefix=<prefix>    Prefix to remove from all the symbols, like
-      |                              `libfoo_`. The removal is case-insensitive.
-      |  --no-scala-enums            Convert C enums to Scala constants instead of enums.
-      |  --dont-convert-floats       Disables the convertion of C `float` and `double`
-      |                              to Scala `f32` and `f64`.
-      |""".stripMargin
-
-
-  case class Args (
-    val arg_file               : String,
-    val arg_clang_args         : Seq[String],
-    val flag_link              : Option[String],
-    val flag_output            : String,
-    val flag_match             : Option[String],
-    val flag_builtins          : Boolean,
-    val flag_emit_clang_ast    : Boolean,
-    val flag_override_enum_type: String,
-    val flag_ctypes_prefix     : String,
-    val flag_use_core          : Boolean,
-    val flag_remove_prefix     : Option[String],
-    val flag_no_scala_enums    : Boolean
-  )
-
+  //+++ final private val USAGE =
+  //+++   s"""|Generate C bindings for Scala Native.
+  //+++       |Usage:
+  //+++       |  bindgen [options] <file> [-- <clang-args>...]
+  //+++       |  bindgen (-h | --help)
+  //+++       |Options:
+  //+++       |  <clang-args>                 Options passed directly to clang.
+  //+++       |  -h, --help                   Display this help message.
+  //+++       |  --link=<library>             Link to a dynamic library, can be provided multiple times.
+  //+++       |                               <library> is in the format `[kind=]lib`, where `kind` is
+  //+++       |                               one of `static`, `dynamic` or `framework`.
+  //+++       |  --output=<output>            Write bindings to <output> (- is stdout).
+  //+++       |                               [default: -]
+  //+++       |  --match=<name>               Only output bindings for definitions from files
+  //+++       |                               whose name contains <name>
+  //+++       |                               If multiple -match options are provided, files
+  //+++       |                               matching any rule are bound to.
+  //+++       |  --builtins                   Output bindings for builtin definitions
+  //+++       |                               (for example __builtin_va_list)
+  //+++       |  --emit-clang-ast             Output the ast (for debugging purposes)
+  //+++       |  --override-enum-type=<type>  Override enum type, type name could be
+  //+++       |                                 uchar
+  //+++       |                                 schar
+  //+++       |                                 ushort
+  //+++       |                                 sshort
+  //+++       |                                 uint
+  //+++       |                                 sint
+  //+++       |                                 ulong
+  //+++       |                                 slong
+  //+++       |                                 ulonglong
+  //+++       |                                 slonglong
+  //+++       |  --use-core                  Use `core` as a base crate for `Option` and such.
+  //+++       |                              See also `--ctypes-prefix`.
+  //+++       |  --ctypes-prefix=<prefix>    Use this prefix for all the types in the generated
+  //+++       |                              code.
+  //+++       |                              [default: std::os::raw]
+  //+++       |  --remove-prefix=<prefix>    Prefix to remove from all the symbols, like
+  //+++       |                              `libfoo_`. The removal is case-insensitive.
+  //+++       |  --no-scala-enums            Convert C enums to Scala constants instead of enums.
+  //+++       |  --dont-convert-floats       Disables the convertion of C `float` and `double`
+  //+++       |                              to Scala `f32` and `f64`.
+  //+++       |""".stripMargin
 
   def main(args: Array[String]): Unit = {
-    val longOptions = Seq(new option(c"link",               1, null,   'l'), 
-                          new option(c"output",             1, null,   'o'), 
-                          new option(c"match",              1, null,   'm'), 
-                          new option(c"builtins",           0, null,   'b'), 
-                          new option(c"emit-clang-ast",     0, null,   'e'), 
-                          new option(c"override-enum-type", 1, null,   'T'), 
-                          new option(c"use-core",           0, null,   'u'), 
-                          new option(c"ctypes-prefix",      1, null,   'c'), 
-                          new option(c"remove-prefix",      1, null,   'r'), 
-                          new option(c"no-scala-enums",     0, null,   'S'), 
-                          new option(null,                  0, null,     0))
+    //FIXME: args.zipWithIndex.foreach { case (arg, idx) => cargs(idx) = new CQuote(StringContext(args(idx))).c }
+
+    val argc = 18 //FIXME: args.length
+    val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
+    argv( 0) = c"scala-bindgen"        ; argv( 1) = c"test/getopt.h"
+    argv( 2) = c"--output"             ; argv( 3) = c"(output)"
+    argv( 4) = c"--match"              ; argv( 5) = c"(match)"
+    argv( 6) = c"--builtins"
+    argv( 7) = c"--emit-clang-ast"
+    argv( 8) = c"--override-enum-type" ; argv( 9) = c"(override-enum-type)"
+    argv(10) = c"--use-core"
+    argv(11) = c"--ctypes-prefix"      ; argv(12) = c"(ctypes-prefix)"
+    argv(13) = c"--remove-prefix"      ; argv(14) = c"(remove-prefix)"
+    argv(15) = c"--no-scala-debug"
+    argv(16) = c"--link"               ; argv(17) = c"(link)"
+
+
+    val longOptions = Seq(new option(c"link",               1, null,   'l') /*,
+                          new option(c"output",             1, null,   'o'),
+                          new option(c"match",              1, null,   'm'),
+                          new option(c"builtins",           0, null,   'b'),
+                          new option(c"emit-clang-ast",     0, null,   'e'),
+                          new option(c"override-enum-type", 1, null,   'T'),
+                          new option(c"use-core",           0, null,   'u'),
+                          new option(c"ctypes-prefix",      1, null,   'c'),
+                          new option(c"remove-prefix",      1, null,   'r'),
+                          new option(c"no-scala-enums",     0, null,   'S'),
+                          new option(null,                  0, null,     0)*/)
 
     val long_options = malloc(sizeof[option] * longOptions.size).cast[Ptr[option]]
-    longOptions.zipWithIndex.foreach { case (options, idx) => long_options(0) = options }
+    //FIXME: longOptions.zipWithIndex.foreach { case (options, idx) => long_options(0) = options }
 
-    val argc = 16 //FIXME: args.length
-    val cargs: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
-    //FIXME: args.zipWithIndex.foreach { case (arg, idx) => cargs(idx) = new CQuote(StringContext(args(idx))).c }
-    cargs( 0) = new CQuote(StringContext("--link")).c;               cargs( 1) = new CQuote(StringContext("(link)")).c
-    cargs( 2) = new CQuote(StringContext("--output")).c;             cargs( 3) = new CQuote(StringContext("(output)")).c
-    cargs( 4) = new CQuote(StringContext("--match")).c;              cargs( 5) = new CQuote(StringContext("(match)")).c
-    cargs( 6) = new CQuote(StringContext("--builtins")).c
-    cargs( 7) = new CQuote(StringContext("--emit-clang-ast")).c
-    cargs( 8) = new CQuote(StringContext("--override-enum-type")).c; cargs( 9) = new CQuote(StringContext("(override-enum-type)")).c
-    cargs(10) = new CQuote(StringContext("--use-core")).c
-    cargs(11) = new CQuote(StringContext("--ctypes-prefix")).c;      cargs(12) = new CQuote(StringContext("(ctypes-prefix)")).c
-    cargs(13) = new CQuote(StringContext("--remove-prefix")).c;      cargs(14) = new CQuote(StringContext("(remove-prefix)")).c
-    cargs(15) = new CQuote(StringContext("--no-scala-debug")).c
+    var c: CInt = 0
 
     val option_index = stackalloc[CInt]
-    var c: CInt = 0
-    c = getopt_long(args.length, cargs, c"l:o:m:beT:uc:r:S", long_options, option_index)
+    c = getopt_long(args.length, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
 
-    // while ( (c = getopt_long(args.length, cargs, c"abc:d:012", long_options, option_index)) != -1) {
+    // while ( (c = getopt_long(args.length, argv, c"abc:d:012", long_options, option_index)) != -1) {
     //   // val this_option_optind = optind ? optind : 1;
     //   // switch (c) {
     //   //
@@ -113,7 +104,23 @@ object Main {
 
   }
 }
- 
+
+
+case class Args (
+  val arg_file               : String,
+  val arg_clang_args         : Seq[String],
+  val flag_link              : Option[String],
+  val flag_output            : String,
+  val flag_match             : Option[String],
+  val flag_builtins          : Boolean,
+  val flag_emit_clang_ast    : Boolean,
+  val flag_override_enum_type: String,
+  val flag_ctypes_prefix     : String,
+  val flag_use_core          : Boolean,
+  val flag_remove_prefix     : Option[String],
+  val flag_no_scala_enums    : Boolean
+)
+
 //   def args_to_opts(args: Args): Builder {
 //     var builder = Builder::new(args.arg_file);
 //     builder.emit_ast(args.flag_emit_clang_ast)
@@ -165,11 +172,11 @@ object Main {
 //     }
 //     builder
 // }
-//  
+//
 // }
-//  
-//  
-//  
+//
+//
+//
 // object Builder {
 //     /// Returns a new builder for the C header to parse.
 //     pub fn new<T: Into<String>>(header: T) -> Builder<'a> {
@@ -368,3 +375,4 @@ class Bindings {
   val module    : Any = null // ast::Mod,
   val attributes: Any = null // Vec<ast::Attribute>,
 }
+
