@@ -71,37 +71,31 @@ object Main {
     argv(10) = c"--use-core"
     argv(11) = c"--ctypes-prefix"      ; argv(12) = c"(ctypes-prefix)"
     argv(13) = c"--remove-prefix"      ; argv(14) = c"(remove-prefix)"
-    argv(15) = c"--no-scala-debug"
+    argv(15) = c"--no-scala-enums"
     argv(16) = c"--link"               ; argv(17) = c"(link)"
 
 
-    val longOptions = Seq(new option(c"link",               1, null,   'l') /*,
-                          new option(c"output",             1, null,   'o'),
-                          new option(c"match",              1, null,   'm'),
-                          new option(c"builtins",           0, null,   'b'),
-                          new option(c"emit-clang-ast",     0, null,   'e'),
-                          new option(c"override-enum-type", 1, null,   'T'),
-                          new option(c"use-core",           0, null,   'u'),
-                          new option(c"ctypes-prefix",      1, null,   'c'),
-                          new option(c"remove-prefix",      1, null,   'r'),
-                          new option(c"no-scala-enums",     0, null,   'S'),
-                          new option(null,                  0, null,     0)*/)
-
-    val long_options = malloc(sizeof[option] * longOptions.size).cast[Ptr[option]]
-    //FIXME: longOptions.zipWithIndex.foreach { case (options, idx) => long_options(0) = options }
+    val long_options = malloc(sizeof[option] * 11).cast[Ptr[option]]
+    long_options( 0) = new option(c"link",               1, null,   'l')
+    long_options( 1) = new option(c"output",             1, null,   'o')
+    long_options( 2) = new option(c"match",              1, null,   'm')
+    long_options( 3) = new option(c"builtins",           0, null,   'b')
+    long_options( 4) = new option(c"emit-clang-ast",     0, null,   'e')
+    long_options( 5) = new option(c"override-enum-type", 1, null,   'T')
+    long_options( 6) = new option(c"use-core",           0, null,   'u')
+    long_options( 7) = new option(c"ctypes-prefix",      1, null,   'c')
+    long_options( 8) = new option(c"remove-prefix",      1, null,   'r')
+    long_options( 9) = new option(c"no-scala-enums",     0, null,   'S')
+    long_options(10) = new option(null,                  0, null,     0)
 
     var c: CInt = 0
+    val option_index: Ptr[CInt] = stackalloc[CInt]
 
-    val option_index = stackalloc[CInt]
-    c = getopt_long(args.length, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
-
-    // while ( (c = getopt_long(args.length, argv, c"abc:d:012", long_options, option_index)) != -1) {
-    //   // val this_option_optind = optind ? optind : 1;
-    //   // switch (c) {
-    //   //
-    //   // }
-    // }
-
+    val f = fopen(c"getopt.txt", c"w")
+    while ( (c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)) != -1) {
+      //val this_option_optind = optind ? optind : 1;
+      fprintf(f, c"option %c\n", c)
+    }
   }
 }
 
