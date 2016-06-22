@@ -10,7 +10,7 @@ import scala.scalanative.libc.getopt._
 
 // other imports
 import scala.collection.Seq
-import scala.collection.mutable
+//import scala.collection.mutable
 
 
 object Main {
@@ -92,65 +92,63 @@ object Main {
     long_options(10) = new option(c"no-scala-enums",     0, null,   'S')
     long_options(11) = new option(null,                  0, null,     0)
 
-    val cargs = Args()
+   var cargs =
+     Args(
+       arg_file                = null,
+       arg_clang_args          = Seq.empty[CString],
+       opt_link                = Seq.empty[CString],
+       opt_output              = null,
+       opt_match               = null,
+       opt_builtins            = false,
+       opt_emit_clang_ast      = false,
+       opt_override_enum_type  = null,
+       opt_ctypes_prefix       = null,
+       opt_use_core            = false,
+       opt_remove_prefix       = null,
+       opt_no_scala_enums      = false)
 
-    def loop: Unit = {
-      val option_index: Ptr[CInt] = stackalloc[CInt]
-      while(true) {
-        val c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
-        c match {
-          case -1  => return
-          case 'l' => // println("l")
-          case 'o' => // println("o")
-          case 'm' => // println("m")
-          case 'b' => // println("b")
-          case 'e' => // println("e")
-          case 'T' => // println("T")
-          case 'u' => // println("u")
-          case 'c' => // println("c")
-          case 'r' => // println("r")
-          case 'S' => // println("S")
-          case 'h' => usage; return
-          case _   => usage; return
-        }
-      }
-    }
-    loop
+    val option_index: Ptr[CInt] = stackalloc[CInt]
+    // def loop: Unit = {
+    //   while(true) {
+    //     val c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
+    //     c match {
+    //       case -1  => return
+    //       case 'l' => cargs = cargs.copy(opt_link               = cargs.opt_link ) // :+ optarg)
+    //       case 'o' => cargs = cargs.copy(opt_output             = optarg)
+    //       case 'm' => cargs = cargs.copy(opt_match              = optarg)
+    //       case 'b' => cargs = cargs.copy(opt_builtins           = true)
+    //       case 'e' => cargs = cargs.copy(opt_emit_clang_ast     = true)
+    //       case 'T' => cargs = cargs.copy(opt_override_enum_type = optarg)
+    //       case 'u' => cargs = cargs.copy(opt_ctypes_prefix      = optarg)
+    //       case 'c' => cargs = cargs.copy(opt_use_core           = true)
+    //       case 'r' => cargs = cargs.copy(opt_remove_prefix      = optarg)
+    //       case 'S' => cargs = cargs.copy(opt_no_scala_enums     = true)
+    //       case 'h' => usage; return
+    //       case _   => usage; return
+    //     }
+    //   }
+    // }
+    // loop
   }
 }
 
 
 @struct
-class Args (
-  val arg_file               : CString,
-  val arg_clang_args         : mutable.Buffer[CString],
-  val flag_link              : mutable.Buffer[CString],
-  val flag_output            : CString,
-  val flag_match             : CString,
-  val flag_builtins          : Boolean,
-  val flag_emit_clang_ast    : Boolean,
-  val flag_override_enum_type: CString,
-  val flag_ctypes_prefix     : CString,
-  val flag_use_core          : Boolean,
-  val flag_remove_prefix     : CString,
-  val flag_no_scala_enums    : Boolean
+case class Args (
+  val arg_file              : CString,
+  val arg_clang_args        : Seq[CString],
+  val opt_link              : Seq[CString],
+  val opt_output            : CString,
+  val opt_match             : CString,
+  val opt_builtins          : Boolean,
+  val opt_emit_clang_ast    : Boolean,
+  val opt_override_enum_type: CString,
+  val opt_ctypes_prefix     : CString,
+  val opt_use_core          : Boolean,
+  val opt_remove_prefix     : CString,
+  val opt_no_scala_enums    : Boolean
 )
-object Args {
-  def apply() =
-   new Args(
-      arg_file                 = null,
-      arg_clang_args           = new mutable.ListBuffer[CString](),
-      flag_link                = new mutable.ListBuffer[CString](),
-      flag_output              = null,
-      flag_match               = null,
-      flag_builtins            = false,
-      flag_emit_clang_ast      = false,
-      flag_override_enum_type  = null,
-      flag_ctypes_prefix       = null,
-      flag_use_core            = false,
-      flag_remove_prefix       = null,
-      flag_no_scala_enums      = false)
-}
+
 
 
 //   def args_to_opts(args: Args): Builder {
