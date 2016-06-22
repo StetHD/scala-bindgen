@@ -9,11 +9,15 @@ import scala.scalanative.libc.getopt._
 
 
 // other imports
-//+++ import scala.collection.Seq
-//+++ import scala.collection.mutable
+import scala.collection.Seq
+import scala.collection.mutable
 
 
 object Main {
+  def usage: Unit = {
+    //println("Generate C bindings for Scala Native.")
+  }
+
   //+++ final private val USAGE =
   //+++   s"""|Generate C bindings for Scala Native.
   //+++       |Usage:
@@ -74,49 +78,80 @@ object Main {
     argv(15) = c"--no-scala-enums"
     argv(16) = c"--link"               ; argv(17) = c"(link)"
 
+    val long_options = malloc(sizeof[option] * 12).cast[Ptr[option]]
+    long_options( 0) = new option(c"help",               0, null,   'h')
+    long_options( 1) = new option(c"link",               1, null,   'l')
+    long_options( 2) = new option(c"output",             1, null,   'o')
+    long_options( 3) = new option(c"match",              1, null,   'm')
+    long_options( 4) = new option(c"builtins",           0, null,   'b')
+    long_options( 5) = new option(c"emit-clang-ast",     0, null,   'e')
+    long_options( 6) = new option(c"override-enum-type", 1, null,   'T')
+    long_options( 7) = new option(c"use-core",           0, null,   'u')
+    long_options( 8) = new option(c"ctypes-prefix",      1, null,   'c')
+    long_options( 9) = new option(c"remove-prefix",      1, null,   'r')
+    long_options(10) = new option(c"no-scala-enums",     0, null,   'S')
+    long_options(11) = new option(null,                  0, null,     0)
 
-    val long_options = malloc(sizeof[option] * 11).cast[Ptr[option]]
-    long_options( 0) = new option(c"link",               1, null,   'l')
-    long_options( 1) = new option(c"output",             1, null,   'o')
-    long_options( 2) = new option(c"match",              1, null,   'm')
-    long_options( 3) = new option(c"builtins",           0, null,   'b')
-    long_options( 4) = new option(c"emit-clang-ast",     0, null,   'e')
-    long_options( 5) = new option(c"override-enum-type", 1, null,   'T')
-    long_options( 6) = new option(c"use-core",           0, null,   'u')
-    long_options( 7) = new option(c"ctypes-prefix",      1, null,   'c')
-    long_options( 8) = new option(c"remove-prefix",      1, null,   'r')
-    long_options( 9) = new option(c"no-scala-enums",     0, null,   'S')
-    long_options(10) = new option(null,                  0, null,     0)
+    val cargs = Args()
 
-    val option_index: Ptr[CInt] = stackalloc[CInt]
-    val f = fopen(c"getopt.txt", c"w")
     def loop: Unit = {
+      val option_index: Ptr[CInt] = stackalloc[CInt]
       while(true) {
         val c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
-        if(c == -1) return
-        fprintf(f, c"option %d\n", c)
+        c match {
+          case -1  => return
+          case 'l' => // println("l")
+          case 'o' => // println("o")
+          case 'm' => // println("m")
+          case 'b' => // println("b")
+          case 'e' => // println("e")
+          case 'T' => // println("T")
+          case 'u' => // println("u")
+          case 'c' => // println("c")
+          case 'r' => // println("r")
+          case 'S' => // println("S")
+          case 'h' => usage; return
+          case _   => usage; return
+        }
       }
     }
     loop
-    fprintf(f, c"done.\n")
   }
 }
 
 
-case class Args (
-  val arg_file               : String,
-  val arg_clang_args         : Seq[String],
-  val flag_link              : Option[String],
-  val flag_output            : String,
-  val flag_match             : Option[String],
+@struct
+class Args (
+  val arg_file               : CString,
+  val arg_clang_args         : mutable.Buffer[CString],
+  val flag_link              : mutable.Buffer[CString],
+  val flag_output            : CString,
+  val flag_match             : CString,
   val flag_builtins          : Boolean,
   val flag_emit_clang_ast    : Boolean,
-  val flag_override_enum_type: String,
-  val flag_ctypes_prefix     : String,
+  val flag_override_enum_type: CString,
+  val flag_ctypes_prefix     : CString,
   val flag_use_core          : Boolean,
-  val flag_remove_prefix     : Option[String],
+  val flag_remove_prefix     : CString,
   val flag_no_scala_enums    : Boolean
 )
+object Args {
+  def apply() =
+   new Args(
+      arg_file                 = null,
+      arg_clang_args           = new mutable.ListBuffer[CString](),
+      flag_link                = new mutable.ListBuffer[CString](),
+      flag_output              = null,
+      flag_match               = null,
+      flag_builtins            = false,
+      flag_emit_clang_ast      = false,
+      flag_override_enum_type  = null,
+      flag_ctypes_prefix       = null,
+      flag_use_core            = false,
+      flag_remove_prefix       = null,
+      flag_no_scala_enums      = false)
+}
+
 
 //   def args_to_opts(args: Args): Builder {
 //     var builder = Builder::new(args.arg_file);
