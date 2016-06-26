@@ -1,17 +1,15 @@
 package scala.scalanative
-package libc
-
-import native._
+package native
 
 
 //@link("c")
 //@name("stdlib")
 @extern
 object getopt {
-  val optarg: CString = extern
-  val optind: CInt    = extern
-  val opterr: CInt    = extern
-  val optopt: CInt    = extern
+  var optarg: CString = extern
+  var optind: CInt    = extern
+  var opterr: CInt    = extern
+  var optopt: CInt    = extern
 
   def getopt(argc: CInt, argv: Ptr[CString], optstring: CString): CInt = extern
 
