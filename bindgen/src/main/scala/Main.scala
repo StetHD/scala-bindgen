@@ -1,7 +1,7 @@
 package bindgen
 
 // standard Scala Native imports
-import scalanative.native._, stdlib._, stdio._
+import scalanative.native._, stdlib._, stdio._, string._
 
 // stdlib and our patches to it
 //import scala.scalanative.native_extra._
@@ -72,7 +72,7 @@ object Main {
     //args.zipWithIndex.foreach { case (arg, idx) => argv(idx) = args(idx) }
 
     //FIXME: this is hardcoded stuff for the time being, for debugging purposes
-    val argc = 19
+    val argc = 23
     val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
     argv( 0) = c"scala-bindgen"
     argv( 1) = c"--output"             ; argv( 2) = c"(output)"
@@ -87,10 +87,10 @@ object Main {
     argv(15) = c"--link"               ; argv(16) = c"(link)"
     argv(17) = c"test/getopt.h"
     argv(18) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
-    //+++ argv(18) = c"--"
-    //+++ argv(19) = c"(clang-arg1)"
-    //+++ argv(20) = c"(clang-arg2)"
-    //+++ argv(21) = c"(clang-arg3)"
+    argv(19) = c"--"
+    argv(20) = c"(clang-arg1)"
+    argv(21) = c"(clang-arg2)"
+    argv(22) = c"(clang-arg3)"
 
     val long_options = malloc(sizeof[option] * 12).cast[Ptr[option]]
     long_options( 0) = new option(c"help",               0, null,   'h')
@@ -109,9 +109,20 @@ object Main {
     var cargs = Args()
     val option_index: Ptr[CInt] = stackalloc[CInt]
 
+    var _argc = argc
+    def loopDoubleHyphen: Unit = {
+      var i = argc
+      while(i > 0) {
+        i = i - 1
+        if(strcmp(c"--", argv(i)) == 0) { _argc = i; return }
+      }
+    }
+    loopDoubleHyphen
+    printf(c"_argc=%d\n", _argc)
+
     def loopOptions: Unit = {
       while(true) {
-        val c = getopt_long(argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
+        val c = getopt_long(_argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
         c match {
           case 'l' => cargs.opt_link               = cargs.opt_link :+ optarg //TODO: new LinkInfo(optarg, LinkType.Dynamic)
           case 'o' => cargs.opt_output             = Some(optarg)
@@ -132,14 +143,23 @@ object Main {
     }
     loopOptions
 
-    def loopArguments: Unit = {
+    def loopArgs: Unit = {
       var i = optind
-      while(i < argc) {
-        cargs.arg_file = cargs.arg_file :+ argv(optind)
+      while(i < _argc) {
+        cargs.arg_file = cargs.arg_file :+ argv(i)
         i = i + 1
       }
     }
-    loopArguments
+    loopArgs
+
+    def loopClangArgs: Unit = {
+      var i = _argc+1
+      while(i < argc) {
+        cargs.arg_clang_args = cargs.arg_clang_args :+ argv(i)
+        i = i + 1
+      }
+    }
+    loopClangArgs
 
     dump(c"arg_file          ", cargs.arg_file)
     dump(c"clang_args        ", cargs.arg_clang_args)
