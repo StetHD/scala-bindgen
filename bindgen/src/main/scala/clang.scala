@@ -7,14 +7,16 @@ object clang {
 
   type CXIndex = Ptr[_]
   type CXTranslationUnit = Ptr[_]
+  type CXClientData = Ptr[_]
+
+
+  @struct class CIntPtr3(_1: Ptr[_], _2: Ptr[_], _3: Ptr[_])
 
   @struct
   class CXCursor(
     val kind: CXCursorKind.enum,
 		val xdata: CInt,
-    val data1: Ptr[_],
-    val data2: Ptr[_],
-    val data3: Ptr[_]
+    val data: CIntPtr3
   )
 
   @struct
@@ -27,15 +29,94 @@ object clang {
 
   def clang_createIndex(excludeDeclarationsFromPCH: CInt, displayDiagnostics: CInt): CXIndex = extern
 
+  def clang_disposeIndex(index: CXIndex): Unit = extern
+
   def	clang_parseTranslationUnit(cIdx: CXIndex,
                                  source_filename: CString,
                                  clang_command_line_args: Ptr[CString],
                                  num_clang_command_line_args: CInt,
                                  unsaved_files: Ptr[CXUnsavedFile],
                                  num_unsaved_files: UInt,
-                                 options: UInt) = extern
+                                 options: UInt): CXTranslationUnit = extern
 
   def clang_getTranslationUnitCursor(translation_unit: CXTranslationUnit): CXCursor = extern
+
+
+
+
+  /**
+	 * \brief Visitor invoked for each cursor found by a traversal.
+	 *
+	 * This visitor function will be invoked for each cursor found by
+	 * clang_visitCursorChildren(). Its first argument is the cursor being
+	 * visited, its second argument is the parent visitor for that cursor,
+	 * and its third argument is the client data provided to
+	 * clang_visitCursorChildren().
+	 *
+	 * The visitor should return one of the \c CXChildVisitResult values
+	 * to direct clang_visitCursorChildren().
+	 */
+  type CXCursorVisitor = FunctionPtr3[CXCursor, CXCursor, CXClientData, CXChildVisitResult.enum] 
+	// typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
+  //                                                    CXCursor parent,
+  //                                                    CXClientData client_data);
+
+  /**
+   * \brief Visit the children of a particular cursor.
+   *
+   * This function visits all the direct children of the given cursor,
+   * invoking the given \p visitor function with the cursors of each
+   * visited child. The traversal may be recursive, if the visitor returns
+   * \c CXChildVisit_Recurse. The traversal may also be ended prematurely, if
+   * the visitor returns \c CXChildVisit_Break.
+   *
+   * \param parent the cursor whose child may be visited. All kinds of
+   * cursors can be visited, including invalid cursors (which, by
+   * definition, have no children).
+   *
+   * \param visitor the visitor function that will be invoked for each
+   * child of \p parent.
+   *
+   * \param client_data pointer data supplied by the client, which will
+   * be passed to the visitor each time it is invoked.
+   *
+   * \returns a non-zero value if the traversal was terminated
+   * prematurely by the visitor returning \c CXChildVisit_Break.
+   */
+  def clang_visitChildren(parent: CXCursor,
+                          visitor: CXCursorVisitor,
+                          client_data: CXClientData): UInt = extern
+
+
+
+
+  /**
+	* \brief Describes how the traversal of the children of a particular
+	* cursor should proceed after visiting a particular child cursor.
+	*
+	* A value of this enumeration type should be returned by each
+	* \c CXCursorVisitor to indicate how clang_visitChildren() proceed.
+	*/
+	object CXChildVisitResult {
+    type enum = CInt
+
+		/**
+		* \brief Terminates the cursor traversal.
+		*/
+		final val CXChildVisit_Break : CXChildVisitResult.enum = 0
+
+		/**
+		* \brief Continues the cursor traversal with the next sibling of
+		* the cursor just visited, without visiting its children.
+		*/
+		final val CXChildVisit_Continue : CXChildVisitResult.enum = 1
+
+		/**
+		* \brief Recursively traverse the children of this cursor, using
+		* the same visitor and client data.
+		*/
+		final val CXChildVisit_Recurse : CXChildVisitResult.enum = 2
+	}
 
 
   object CXTranslationUnit_Flags {
@@ -45,7 +126,7 @@ object clang {
     	* \brief Used to indicate that no special translation-unit options are
     	* needed.
     	*/
-     final val CXTranslationUnit_None : CXTranslationUnit_Flags.enum = 0x0.toUInt
+    final val CXTranslationUnit_None : CXTranslationUnit_Flags.enum = 0x0.toUInt
     
      /**
     	* \brief Used to indicate that the parser should construct a "detailed"
@@ -153,7 +234,7 @@ object clang {
 
 
   object CXCursorKind {
-    type enum = Int
+    type enum = CInt
   
     /**
    	* \brief A declaration whose specific kind is not exposed via this

@@ -185,13 +185,24 @@ object Main {
 
 
     cargs.arg_files.foreach { f =>
-      val index = clang_createIndex(0, 0)
       dump(c"--> Processing file", f)
+      val index = clang_createIndex(0, 0)
+      puts(c"1")
+      //XXX assert(argc-(_argc+1) == cargs.arg_clang_args.size)
+      //XXX puts(c"asserted")
+      //XXX dump(c"clang_args", cargs.arg_clang_args.size, argv + (_argc+1))
       val unit  = clang_parseTranslationUnit(index, f,
-                                             argv + _argc + 1, //TODO: cargs.arg_clang_args,
+                                             argv + (_argc+1), //TODO: cargs.arg_clang_args,
                                              cargs.arg_clang_args.size,
                                              null, 0.toUInt, CXTranslationUnit_None)
-
+      puts(c"2")
+      addr(c"unit", unit)
+      val cursor = clang_getTranslationUnitCursor(unit)
+      puts(c"3")
+      // clang_visitChildren(cursor, visitor, this)
+      puts(c"4")
+      clang_disposeIndex(index)
+      puts(c"5")
     }
 
     puts(c"Done.")
@@ -202,6 +213,13 @@ object Main {
   private val fmt   = c"%s: %s\n"
   private def dump(p: CString, s: CString): Unit         = /*if(s != NULL)*/ printf(fmt, p, s) /*else printf(fmt, p, c"--undefined--")*/
   private def dump(p: CString, o: Option[CString]): Unit = if(o.isDefined) printf(fmt, p, o.get) else printf(fmt, p, c"--undefined--")
+  private def dump(p: CString, argc: CInt, argv: Ptr[CString]): Unit = {
+    printf(c"%s:", p)
+    for(i <- 1 to argc.toInt) printf(c" %s", argv(i-1))
+    puts(c"")
+  }
+  private def dump(p: CString, i: Int): Unit             = printf(c"%s: %d\n", p, i) //FIXME
+  private def addr(p: CString, x: Ptr[_]): Unit          = printf(c"%s: %x\n", p, x) //FIXME
   private def dump(p: CString, b: Boolean): Unit         = if(b) printf(fmt, p, c"true") else printf(fmt, p, c"false")
   private def dump(p: CString, l: Seq[CString]): Unit    = {
     printf(c"%s:", p)
