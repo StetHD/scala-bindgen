@@ -16,6 +16,10 @@ import scala.collection.Seq
 
 
 object Main {
+
+  import Debug._ //FIXME: remove
+
+
   def usage: Unit = {
     puts(c"Generate C bindings for Scala Native.")
   }
@@ -86,9 +90,9 @@ object Main {
       argv(14) = c"--no-scala-enums"
       argv(15) = c"--link"               ; argv(16) = c"(link)"
 
-      argv(17) = c"test/getopt.h"
+      //argv(17) = c"test/getopt.h"
       //+++ argv(17) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
-      //+++ argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
+      argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
 
       argv(18) = c"--"
       argv(19) = c"-c"
@@ -184,15 +188,30 @@ object Main {
     dump(c"remove_prefix     ", cargs.opt_remove_prefix)
     dump(c"no_scala_enums    ", cargs.opt_no_scala_enums)
 
+    new Visitor(cargs).process
+  }
 
+}
+
+
+
+class Visitor(cargs: Args) {
+
+  import Debug._ //FIXME: remove
+
+  def process(): Int = {
     cargs.arg_files.foreach { f =>
       val file = path(f)
       dump(c"--> Processing file", file)
       val index = clang_createIndex(0, 0)
       puts(c"1")
+      addr(c"index", index) // https://github.com/scala-native/scala-native/issues/215
+
+      val clang_argc = cargs.arg_clang_args.size
+      val clang_argv: Ptr[CString] = malloc(sizeof[CString] * cargs.arg_clang_args.size).cast[Ptr[CString]]
+      cargs.arg_clang_args.zipWithIndex.foreach { case (p, i) => clang_argv(i) = p }
       val unit  = clang_parseTranslationUnit(index, file,
-                                             argv + (_argc+1), //TODO: cargs.arg_clang_args,
-                                             cargs.arg_clang_args.size,
+                                             clang_argv, clang_argc,
                                              null, 0.toUInt, CXTranslationUnit_None)
       puts(c"2")
       addr(c"unit", unit) // https://github.com/scala-native/scala-native/issues/215
@@ -204,49 +223,19 @@ object Main {
       puts(c"4")
       clang_disposeIndex(index)
       puts(c"5")
+      free(clang_argv)
       free(file)
       puts(c"6")
+      puts(c"Done.")
     }
-
-    puts(c"Done.")
     0
   }
-
-  
-
-
-
 
   @inline def path(file_name: CString): CString = {
     val resolved_name: CString = malloc(512).cast[CString]
     stdlib_extra.realpath(file_name, resolved_name)
     resolved_name
   }
-
-
-  @extern
-  object stdlib_extra {
-    def realpath(file_name: CString, resolved_name: CString): CString = extern
-  }
-
-
-  private val fmt   = c"%s: %s\n"
-  private def dump(p: CString, s: CString): Unit         = /*if(s != NULL)*/ printf(fmt, p, s) /*else printf(fmt, p, c"--undefined--")*/
-  private def dump(p: CString, o: Option[CString]): Unit = if(o.isDefined) printf(fmt, p, o.get) else printf(fmt, p, c"--undefined--")
-  private def dump(p: CString, argc: CInt, argv: Ptr[CString]): Unit = {
-    printf(c"%s:", p)
-    for(i <- 1 to argc.toInt) printf(c" %s", argv(i-1))
-    puts(c"")
-  }
-  private def dump(p: CString, i: Int): Unit             = printf(c"%s: %d\n", p, i) //FIXME
-  private def addr(p: CString, x: Ptr[_]): Unit          = printf(c"%s: %x\n", p, x) //FIXME
-  private def dump(p: CString, b: Boolean): Unit         = if(b) printf(fmt, p, c"true") else printf(fmt, p, c"false")
-  private def dump(p: CString, l: Seq[CString]): Unit    = {
-    printf(c"%s:", p)
-    l.foreach(a => printf(c" %s", a))
-    puts(c"")
-  }
-
 }
 
 
@@ -308,4 +297,30 @@ trait Logger { //FIXME : std::fmt::Debug {
 class Bindings {
   val module    : Any = null // ast::Mod,
   val attributes: Any = null // Vec<ast::Attribute>,
+}
+
+
+object Debug {
+  private val fmt   = c"%s: %s\n"
+  def dump(p: CString, s: CString): Unit         = /*if(s != NULL)*/ printf(fmt, p, s) /*else printf(fmt, p, c"--undefined--")*/
+  def dump(p: CString, o: Option[CString]): Unit = if(o.isDefined) printf(fmt, p, o.get) else printf(fmt, p, c"--undefined--")
+  def dump(p: CString, argc: CInt, argv: Ptr[CString]): Unit = {
+    printf(c"%s:", p)
+    for(i <- 1 to argc.toInt) printf(c" %s", argv(i-1))
+    puts(c"")
+  }
+  def dump(p: CString, i: Int): Unit             = printf(c"%s: %d\n", p, i) //FIXME
+  def addr(p: CString, x: Ptr[_]): Unit          = printf(c"%s: %x\n", p, x) //FIXME
+  def dump(p: CString, b: Boolean): Unit         = if(b) printf(fmt, p, c"true") else printf(fmt, p, c"false")
+  def dump(p: CString, l: Seq[CString]): Unit    = {
+    printf(c"%s:", p)
+    l.foreach(a => printf(c" %s", a))
+    puts(c"")
+  }
+}
+
+
+@extern
+object stdlib_extra {
+  def realpath(file_name: CString, resolved_name: CString): CString = extern
 }
