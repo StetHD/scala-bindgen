@@ -90,9 +90,9 @@ object Main {
       argv(14) = c"--no-scala-enums"
       argv(15) = c"--link"               ; argv(16) = c"(link)"
 
-      //argv(17) = c"test/getopt.h"
+      argv(17) = c"test/getopt.h"
       //+++ argv(17) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
-      argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
+      //argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
 
       argv(18) = c"--"
       argv(19) = c"-c"

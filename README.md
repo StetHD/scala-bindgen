@@ -11,16 +11,59 @@ scala-bindgen was originally ported from [Rust's bindgen], which was originally 
 
 ## For the impatient
 
+* For convenience, please define LLVM_HOME similar to the example below:
+
+    $ export LLVM_HOME=/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8
+
+* Make sure you define LD_LIBRARY_PATH:
+
+    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LLVM_HOME/lib
+
+* Now you can build and run
+
     $ sbt nativeLink
-    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8/lib
     $ bindgen/target/scala-2.11/bindgen-out
+
 
 ## How it works
 
-* employs LLVM for parsing C source files
-* LLVM builds an AST which represents all sources parsed
-* bindgen visits the AST and generates Scala sources
+In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant ``Clang`` compiler for completing the task of transforming header files into ``C`` bindings.
 
+* ``scala-bindgen`` employs ``Clang`` (from LLVM infrastructure) for parsing ``C`` header files;
+* ``Clang`` builds an AST which represents all sources parsed;
+* ``scala-bindgen`` visits the AST and generates Scala bindings.
+
+At the moment ``scala-bindgen`` only generates bindings for ``C`` language.
+
+
+### Usage
+
+Due to pending items in Scala Native, we currenly cannot obtain parameters from the command line.
+For this reason, the code has some hardcoded arguments, for testing purposes.
+
+But anyway... when command line arguments become wired properly, it will be like this:
+
+    $ scala-bindgen [arguments] <header-file> [-- [clang-arguments]]
+
+### Examples
+
+Tries to find ``stdlib.h`` in the current directory and, if not successful, tries on "well known" locations. Generates bindings on the current directory, on file ``stdlib.scala``:
+
+    $ scala-bindgen stdlib.h
+
+Same as above, but defines a package name for the generated bindings:
+
+    $ scala-bindgen --package scala.scalanative.my.bindings stdlib.h
+
+Same as above, but defines an enclosing object named ``my_stdlib``, instead of ``stdlib``:
+
+    $ scala-bindgen --package scala.scalanative.my.bindings --name my_stdlib stdlib.h
+
+Passes arguments to Clang after the double hyphen ``--``:
+
+    $ scala-bindgen rational_solver.h -- -DMAX_INTERATIONS=100 -DTOLERANCE=1.0E-10 \
+                                         -I $RATIONAL_INCLUDE \
+                                         -L $RATIONAL_LIB -lrational
 
 ## Community
 
