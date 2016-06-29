@@ -185,28 +185,47 @@ object Main {
 
 
     cargs.arg_files.foreach { f =>
-      dump(c"--> Processing file", f)
+      val file = path(f)
+      dump(c"--> Processing file", file)
       val index = clang_createIndex(0, 0)
       puts(c"1")
-      //XXX assert(argc-(_argc+1) == cargs.arg_clang_args.size)
-      //XXX puts(c"asserted")
-      //XXX dump(c"clang_args", cargs.arg_clang_args.size, argv + (_argc+1))
-      val unit  = clang_parseTranslationUnit(index, f,
+      val unit  = clang_parseTranslationUnit(index, file,
                                              argv + (_argc+1), //TODO: cargs.arg_clang_args,
                                              cargs.arg_clang_args.size,
                                              null, 0.toUInt, CXTranslationUnit_None)
       puts(c"2")
-      addr(c"unit", unit)
+      addr(c"unit", unit) // https://github.com/scala-native/scala-native/issues/215
       val cursor = clang_getTranslationUnitCursor(unit)
       puts(c"3")
-      // clang_visitChildren(cursor, visitor, this)
+
+      //TODO: clang_visitChildren(cursor, visitor, this)
+
       puts(c"4")
       clang_disposeIndex(index)
       puts(c"5")
+      free(file)
+      puts(c"6")
     }
 
     puts(c"Done.")
     0
+  }
+
+  
+
+
+
+
+  @inline def path(file_name: CString): CString = {
+    val resolved_name: CString = malloc(512).cast[CString]
+    stdlib_extra.realpath(file_name, resolved_name)
+    resolved_name
+  }
+
+
+  @extern
+  object stdlib_extra {
+    def realpath(file_name: CString, resolved_name: CString): CString = extern
   }
 
 
