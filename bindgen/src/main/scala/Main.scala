@@ -88,6 +88,7 @@ object Main {
 
       argv(17) = c"test/getopt.h"
       //+++ argv(17) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
+      //+++ argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
 
       argv(18) = c"--"
       argv(19) = c"-c"
