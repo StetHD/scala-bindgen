@@ -103,4 +103,6 @@ Scala Native is distributed under [the Scala license].
 [Clay's bindgen]: http://github.com/jckarter/clay/blob/master/tools/bindgen.clay
 [Rust's bindgen]: http://github.com/crabtw/rust-bindgen
 
+[Clang]: http://clang.llvm.org/
+[LLVM]: http://llvm.org
 [stdlib.scala]: http://github.com/scala-native/scala-native/blob/master/nativelib/src/main/scala/scala/scalanative/native/stdlib.scala
