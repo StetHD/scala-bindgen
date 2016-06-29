@@ -47,9 +47,25 @@ But anyway... when command line arguments become wired properly, it will be like
 
 ### Examples
 
-Tries to find ``stdlib.h`` in the current directory and, if not successful, tries on "well known" locations. Generates bindings on the current directory, on file ``stdlib.scala``:
+The necessary help screen:
 
-    $ scala-bindgen stdlib.h
+    $ scala-bindgen --help
+
+Generate bindings for ``getopt.h`` on a given output directory:
+
+    $ mkdir -p fake/src
+    $ scala-bindgen -O fake/src test/getopt.h
+
+Same as before, but passes the include directory to ``Clang``:
+
+    $ mkdir -p fake/src
+    $ scala-bindgen -O fake/src getopt.h -- -I test
+
+Tries to find ``stdlib.h`` in the current directory and, if not successful, tries on "well known locations".
+Generates bindings on the current directory, on file ``stdlib.scala``.
+Passes ``--verbose`` flag a number of times so that it increases the logging level, displaying which "well known locations" are those:
+
+    $ scala-bindgen -vvv stdlib.h
 
 Same as above, but defines a package name for the generated bindings:
 
