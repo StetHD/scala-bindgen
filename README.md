@@ -27,7 +27,8 @@ scala-bindgen was originally ported from [Rust's bindgen], which was originally 
 
 ## How it works
 
-In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant ``Clang`` compiler for completing the task of transforming header files into ``C`` bindings.
+In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant [Clang] compiler (from [LLVM] infrastructure) for achieving the task of transforming 
+``C`` header files into ``Scala`` bindings. For examples on how ``Scala`` bindings look like, please see [stdlib.scala].
 
 * ``scala-bindgen`` employs ``Clang`` (from LLVM infrastructure) for parsing ``C`` header files;
 * ``Clang`` builds an AST which represents all sources parsed;
@@ -101,3 +102,5 @@ Scala Native is distributed under [the Scala license].
 [Scala Native]: http://github.com/scala-native/scala-native
 [Clay's bindgen]: http://github.com/jckarter/clay/blob/master/tools/bindgen.clay
 [Rust's bindgen]: http://github.com/crabtw/rust-bindgen
+
+[stdlib.scala]: http://github.com/scala-native/scala-native/blob/master/nativelib/src/main/scala/scala/scalanative/native/stdlib.scala
