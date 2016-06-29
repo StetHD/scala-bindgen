@@ -8,6 +8,8 @@ import scalanative.native._, stdlib._, stdio._, string._
 import scala.scalanative.native.stdlib_extra._
 import scala.scalanative.native.getopt._
 
+import scala.scalanative.native.clang._
+import scala.scalanative.native.clang.CXTranslationUnit_Flags._
 
 // other imports
 import scala.collection.Seq
@@ -62,35 +64,41 @@ object Main {
   //+++       |""".stripMargin
 
   def main(args: Array[String]): Unit = {
-    cli(args)
+    if(args != null) {
+      val argc = args.length
+      val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
+      args.zipWithIndex.foreach { case (arg, idx) => argv(idx) = args(idx) }
+      main(argc, argv)
+    } else {
+      puts("***** BUG: SN is not passing command line arguments to application code. *****")
+      //FIXME: 
+      val argc = 20
+      val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
+      argv( 0) = c"scala-bindgen"
+      argv( 1) = c"--output"             ; argv( 2) = c"(output)"
+      argv( 3) = c"--match"              ; argv( 4) = c"(match)"
+      argv( 5) = c"--builtins"
+      argv( 6) = c"--emit-clang-ast"
+      argv( 7) = c"--override-enum-type" ; argv( 8) = c"(override-enum-type)"
+      argv( 9) = c"--use-core"
+      argv(10) = c"--ctypes-prefix"      ; argv(11) = c"(ctypes-prefix)"
+      argv(12) = c"--remove-prefix"      ; argv(13) = c"(remove-prefix)"
+      argv(14) = c"--no-scala-enums"
+      argv(15) = c"--link"               ; argv(16) = c"(link)"
+
+      argv(17) = c"test/getopt.h"
+      //+++ argv(17) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
+
+      argv(18) = c"--"
+      argv(19) = c"-c"
+      main(argc, argv)
+    }
   }
 
 
-  def cli(args: Array[String]): Args = {
-    //val argc = args.length
-    //val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
-    //args.zipWithIndex.foreach { case (arg, idx) => argv(idx) = args(idx) }
-
-    //FIXME: this is hardcoded stuff for the time being, for debugging purposes
-    val argc = 23
-    val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
-    argv( 0) = c"scala-bindgen"
-    argv( 1) = c"--output"             ; argv( 2) = c"(output)"
-    argv( 3) = c"--match"              ; argv( 4) = c"(match)"
-    argv( 5) = c"--builtins"
-    argv( 6) = c"--emit-clang-ast"
-    argv( 7) = c"--override-enum-type" ; argv( 8) = c"(override-enum-type)"
-    argv( 9) = c"--use-core"
-    argv(10) = c"--ctypes-prefix"      ; argv(11) = c"(ctypes-prefix)"
-    argv(12) = c"--remove-prefix"      ; argv(13) = c"(remove-prefix)"
-    argv(14) = c"--no-scala-enums"
-    argv(15) = c"--link"               ; argv(16) = c"(link)"
-    argv(17) = c"test/getopt.h"
-    argv(18) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
-    argv(19) = c"--"
-    argv(20) = c"(clang-arg1)"
-    argv(21) = c"(clang-arg2)"
-    argv(22) = c"(clang-arg3)"
+  def main(argc: CInt, argv: Ptr[CString]): CInt = {
+    printf(c"// argc=%d\n", argc)
+    printf(c"// argv=%d\n", argv.cast[Int])
 
     val long_options = malloc(sizeof[option] * 12).cast[Ptr[option]]
     long_options( 0) = new option(c"help",               0, null,   'h')
@@ -118,7 +126,7 @@ object Main {
       }
     }
     loopDoubleHyphen
-    printf(c"_argc=%d\n", _argc)
+    printf(c"// _argc=%d\n", _argc)
 
     def loopOptions: Unit = {
       while(true) {
@@ -146,7 +154,7 @@ object Main {
     def loopArgs: Unit = {
       var i = optind
       while(i < _argc) {
-        cargs.arg_file = cargs.arg_file :+ argv(i)
+        cargs.arg_files = cargs.arg_files :+ argv(i)
         i = i + 1
       }
     }
@@ -161,7 +169,8 @@ object Main {
     }
     loopClangArgs
 
-    dump(c"arg_file          ", cargs.arg_file)
+    //FIXME: remove these things
+    dump(c"arg_files         ", cargs.arg_files)
     dump(c"clang_args        ", cargs.arg_clang_args)
     dump(c"link              ", cargs.opt_link)
     dump(c"output            ", cargs.opt_output)
@@ -173,13 +182,25 @@ object Main {
     dump(c"use_core          ", cargs.opt_use_core)
     dump(c"remove_prefix     ", cargs.opt_remove_prefix)
     dump(c"no_scala_enums    ", cargs.opt_no_scala_enums)
-    puts(c"Done.")
 
-    cargs
+
+    cargs.arg_files.foreach { f =>
+      val index = clang_createIndex(0, 0)
+      dump(c"--> Processing file", f)
+      val unit  = clang_parseTranslationUnit(index, f,
+                                             argv + _argc + 1, //TODO: cargs.arg_clang_args,
+                                             cargs.arg_clang_args.size,
+                                             null, 0.toUInt, CXTranslationUnit_None)
+
+    }
+
+    puts(c"Done.")
+    0
   }
 
 
   private val fmt   = c"%s: %s\n"
+  private def dump(p: CString, s: CString): Unit         = /*if(s != NULL)*/ printf(fmt, p, s) /*else printf(fmt, p, c"--undefined--")*/
   private def dump(p: CString, o: Option[CString]): Unit = if(o.isDefined) printf(fmt, p, o.get) else printf(fmt, p, c"--undefined--")
   private def dump(p: CString, b: Boolean): Unit         = if(b) printf(fmt, p, c"true") else printf(fmt, p, c"false")
   private def dump(p: CString, l: Seq[CString]): Unit    = {
@@ -192,7 +213,7 @@ object Main {
 
 
 class Args (
-  var arg_file              : Seq[CString],
+  var arg_files             : Seq[CString],
   var arg_clang_args        : Seq[CString],
   var opt_link              : Seq[CString],
   var opt_output            : Option[CString],
@@ -208,7 +229,7 @@ class Args (
 object Args {
   def apply() =
     new Args(
-      arg_file                = Seq.empty[CString],
+      arg_files               = Seq.empty[CString],
       arg_clang_args          = Seq.empty[CString],
       opt_link                = Seq.empty[CString],
       opt_output              = None,

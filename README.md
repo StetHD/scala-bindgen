@@ -9,6 +9,12 @@ See also: [Scala Native]
 
 scala-bindgen was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
 
+## For the impatient
+
+    $ sbt nativeLink
+    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8/lib
+    $ bindgen/target/scala-2.11/bindgen-out
+
 ## How it works
 
 * employs LLVM for parsing C source files

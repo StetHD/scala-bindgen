@@ -2,8 +2,6 @@ package scala.scalanative
 package native
 
 
-//@link("c")
-//@name("stdlib")
 @extern
 object getopt {
   var optarg: CString = extern
