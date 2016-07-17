@@ -11,15 +11,15 @@ scala-bindgen was originally ported from [Rust's bindgen], which was originally 
 
 ## For the impatient
 
-* For convenience, please define LLVM_HOME similar to the example below:
+For convenience, please define LLVM_HOME similar to the example below:
 
     $ export LLVM_HOME=/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8
 
-* Make sure you define LD_LIBRARY_PATH:
+Make sure you define LD_LIBRARY_PATH:
 
     $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LLVM_HOME/lib
 
-* Now you can build and run
+Now you can build and run:
 
     $ sbt nativeLink
     $ bindgen/target/scala-2.11/bindgen-out
