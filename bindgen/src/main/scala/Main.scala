@@ -81,7 +81,10 @@ object Main {
       argv( 0) = c"scala-bindgen"
       argv( 1) = c"--output"             ; argv( 2) = c"(output)"
       argv( 3) = c"--match"              ; argv( 4) = c"(match)"
+
       argv( 5) = c"--builtins"
+      //-- argv( 5) = c"--help"
+
       argv( 6) = c"--emit-clang-ast"
       argv( 7) = c"--override-enum-type" ; argv( 8) = c"(override-enum-type)"
       argv( 9) = c"--use-core"
@@ -147,10 +150,10 @@ object Main {
           case 'u' => cargs.opt_use_core           = true
           case 'r' => cargs.opt_remove_prefix      = Some(optarg)
           case 'S' => cargs.opt_no_scala_enums     = true
-          case 'h' => usage; return
-          case '?' => usage; return
+          case 'h' => usage; System.exit(0)
+          case '?' => usage; System.exit(0)
           case -1  => return
-          case _   => usage; return
+          case _   => usage; System.exit(1)
         }
       }
     }
