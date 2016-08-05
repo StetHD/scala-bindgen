@@ -11,12 +11,9 @@ scala-bindgen was originally ported from [Rust's bindgen], which was originally 
 
 ## For the impatient
 
-For convenience, please define LLVM_HOME similar to the example below:
+Please define LLVM_HOME and LD_LIBRARY_PATH similar to the example below:
 
     $ export LLVM_HOME=/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8
-
-Make sure you define LD_LIBRARY_PATH:
-
     $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LLVM_HOME/lib
 
 Now you can build and run:
@@ -29,34 +26,29 @@ Now you can build and run:
 In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant [Clang] compiler (from [LLVM] infrastructure) for achieving the task of transforming 
 ``C`` header files into ``Scala`` bindings. For examples on how ``Scala`` bindings look like, please see [stdlib.scala].
 
-* ``scala-bindgen`` employs ``Clang`` (from LLVM infrastructure) for parsing ``C`` header files;
-* ``Clang`` builds an AST which represents all sources parsed;
-* ``scala-bindgen`` visits the AST and generates Scala bindings.
+1. ``scala-bindgen`` employs ``Clang`` (from LLVM infrastructure) for parsing ``C`` header files;
+2. ``Clang`` builds an AST which represents all sources parsed;
+3. ``scala-bindgen`` visits the AST and generates Scala bindings.
 
 At the moment ``scala-bindgen`` only generates bindings for ``C`` language.
 
 
 ### Usage
 
-Due to pending items in Scala Native, we currenly cannot obtain parameters from the command line.
-For this reason, the code has some hardcoded arguments, for testing purposes.
-
-But anyway... when command line arguments become wired properly, it will be like this:
+**NOTE:** This section is about ***intents***, not really on features implemented and working properly.
 
     $ scala-bindgen [arguments] <header-file> [-- [clang-arguments]]
 
-### Examples
-
-The necessary help screen:
+#### the necessary help screen
 
     $ scala-bindgen --help
 
-Generate bindings for ``getopt.h`` on a given output directory:
+#### generate bindings on a given output directory
 
     $ mkdir -p fake/src
     $ scala-bindgen -O fake/src test/getopt.h
 
-Same as before, but passes the include directory to ``Clang``:
+#### same as before, but passes the include directory to ``Clang``
 
     $ mkdir -p fake/src
     $ scala-bindgen -O fake/src getopt.h -- -I test
@@ -67,19 +59,21 @@ Passes ``--verbose`` flag a number of times so that it increases the logging lev
 
     $ scala-bindgen -vvv stdlib.h
 
-Same as above, but defines a package name for the generated bindings:
+#### defines a package name for the generated bindings
 
     $ scala-bindgen --package scala.scalanative.my.bindings stdlib.h
 
-Same as above, but defines an enclosing object named ``my_stdlib``, instead of ``stdlib``:
+#### defines an enclosing object with a specific name
 
     $ scala-bindgen --package scala.scalanative.my.bindings --name my_stdlib stdlib.h
 
-Passes arguments to Clang after the double hyphen ``--``:
+#### passes arguments to Clang after the double hyphen
 
     $ scala-bindgen rational_solver.h -- -DMAX_INTERATIONS=100 -DTOLERANCE=1.0E-10 \
                                          -I $RATIONAL_INCLUDE \
                                          -L $RATIONAL_LIB -lrational
+
+Observe that anything after double hyphen "--" are passed to [Clang].
 
 ## Community
 
