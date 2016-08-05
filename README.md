@@ -22,8 +22,7 @@ Make sure you define LD_LIBRARY_PATH:
 Now you can build and run:
 
     $ sbt nativeLink
-    $ bindgen/target/scala-2.11/bindgen-out
-
+    $ bindgen/target/scala-2.11/bindgen-out test/getopt.h
 
 ## How it works
 

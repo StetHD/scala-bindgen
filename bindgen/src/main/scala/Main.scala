@@ -19,95 +19,66 @@ object Main {
 
   import Debug._ //FIXME: remove
 
-
   def usage: Unit = {
-    puts(c"Generate C bindings for Scala Native.")
+    println("Generate C bindings for Scala Native.")
+    println("Usage:")
+    println("  bindgen [options] <file> [-- <clang-args>...]")
+    println("  bindgen (-h | --help)")
+    println("Options:")
+    println("  <clang-args>                 Options passed directly to clang.")
+    println("  -h, --help                   Display this help message.")
+    println("  --link=<library>             Link to a dynamic library, can be provided multiple times.")
+    println("                               <library> is in the format `[kind=]lib`, where `kind` is")
+    println("                               one of `static`, `dynamic` or `framework`.")
+    println("  --output=<output>            Write bindings to <output> (- is stdout).")
+    println("                               [default: -]")
+    println("  --match=<name>               Only output bindings for definitions from files")
+    println("                               whose name contains <name>")
+    println("                               If multiple -match options are provided, files")
+    println("                               matching any rule are bound to.")
+    println("  --builtins                   Output bindings for builtin definitions")
+    println("                               (for example __builtin_va_list)")
+    println("  --emit-clang-ast             Output the ast (for debugging purposes)")
+    println("  --override-enum-type=<type>  Override enum type, type name could be")
+    println("                                 uchar")
+    println("                                 schar")
+    println("                                 ushort")
+    println("                                 sshort")
+    println("                                 uint")
+    println("                                 sint")
+    println("                                 ulong")
+    println("                                 slong")
+    println("                                 ulonglong")
+    println("                                 slonglong")
+    println("  --use-core                  Use `core` as a base crate for `Option` and such.")
+    println("                              See also `--ctypes-prefix`.")
+    println("  --ctypes-prefix=<prefix>    Use this prefix for all the types in the generated")
+    println("                              code.")
+    println("                              [default: std::os::raw]")
+    println("  --remove-prefix=<prefix>    Prefix to remove from all the symbols, like")
+    println("                              `libfoo_`. The removal is case-insensitive.")
+    println("  --no-scala-enums            Convert C enums to Scala constants instead of enums.")
+    println("  --dont-convert-floats       Disables the convertion of C `float` and `double`")
+    println("                              to Scala `f32` and `f64`.")
   }
 
-  //+++ final private val USAGE =
-  //+++   s"""|Generate C bindings for Scala Native.
-  //+++       |Usage:
-  //+++       |  bindgen [options] <file> [-- <clang-args>...]
-  //+++       |  bindgen (-h | --help)
-  //+++       |Options:
-  //+++       |  <clang-args>                 Options passed directly to clang.
-  //+++       |  -h, --help                   Display this help message.
-  //+++       |  --link=<library>             Link to a dynamic library, can be provided multiple times.
-  //+++       |                               <library> is in the format `[kind=]lib`, where `kind` is
-  //+++       |                               one of `static`, `dynamic` or `framework`.
-  //+++       |  --output=<output>            Write bindings to <output> (- is stdout).
-  //+++       |                               [default: -]
-  //+++       |  --match=<name>               Only output bindings for definitions from files
-  //+++       |                               whose name contains <name>
-  //+++       |                               If multiple -match options are provided, files
-  //+++       |                               matching any rule are bound to.
-  //+++       |  --builtins                   Output bindings for builtin definitions
-  //+++       |                               (for example __builtin_va_list)
-  //+++       |  --emit-clang-ast             Output the ast (for debugging purposes)
-  //+++       |  --override-enum-type=<type>  Override enum type, type name could be
-  //+++       |                                 uchar
-  //+++       |                                 schar
-  //+++       |                                 ushort
-  //+++       |                                 sshort
-  //+++       |                                 uint
-  //+++       |                                 sint
-  //+++       |                                 ulong
-  //+++       |                                 slong
-  //+++       |                                 ulonglong
-  //+++       |                                 slonglong
-  //+++       |  --use-core                  Use `core` as a base crate for `Option` and such.
-  //+++       |                              See also `--ctypes-prefix`.
-  //+++       |  --ctypes-prefix=<prefix>    Use this prefix for all the types in the generated
-  //+++       |                              code.
-  //+++       |                              [default: std::os::raw]
-  //+++       |  --remove-prefix=<prefix>    Prefix to remove from all the symbols, like
-  //+++       |                              `libfoo_`. The removal is case-insensitive.
-  //+++       |  --no-scala-enums            Convert C enums to Scala constants instead of enums.
-  //+++       |  --dont-convert-floats       Disables the convertion of C `float` and `double`
-  //+++       |                              to Scala `f32` and `f64`.
-  //+++       |""".stripMargin
 
   def main(args: Array[String]): Unit = {
-    if(args != null) {
-      val argc = args.length
-      val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
-      args.zipWithIndex.foreach { case (arg, idx) => argv(idx) = args(idx) }
-      main(argc, argv)
-    } else {
-      puts("***** BUG: SN is not passing command line arguments to application code. *****")
-      //FIXME: 
-      val argc = 20
-      val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
-      argv( 0) = c"scala-bindgen"
-      argv( 1) = c"--output"             ; argv( 2) = c"(output)"
-      argv( 3) = c"--match"              ; argv( 4) = c"(match)"
-
-      argv( 5) = c"--builtins"
-      //-- argv( 5) = c"--help"
-
-      argv( 6) = c"--emit-clang-ast"
-      argv( 7) = c"--override-enum-type" ; argv( 8) = c"(override-enum-type)"
-      argv( 9) = c"--use-core"
-      argv(10) = c"--ctypes-prefix"      ; argv(11) = c"(ctypes-prefix)"
-      argv(12) = c"--remove-prefix"      ; argv(13) = c"(remove-prefix)"
-      argv(14) = c"--no-scala-enums"
-      argv(15) = c"--link"               ; argv(16) = c"(link)"
-
-      argv(17) = c"test/getopt.h"
-      //+++ argv(17) = c"../llvm-sources/llvm/include/llvm-c/Core.h"
-      //argv(17) = c"../llvm-sources/llvm/tools/clang/include/clang-c/Index.h"
-
-      argv(18) = c"--"
-      argv(19) = c"-c"
-      main(argc, argv)
-    }
+    val argc = args.length
+    //see: https://github.com/scala-native/scala-native/issues/266
+    val argv: Ptr[CString] = malloc(sizeof[CString] * argc+1).cast[Ptr[CString]]
+    argv(0) = "bindgen"
+    args.zipWithIndex.foreach { case (arg, idx) => argv(idx+1) = args(idx) }
+    main(argc+1, argv)
   }
 
-
   def main(argc: CInt, argv: Ptr[CString]): CInt = {
+    //-------------------------------------
     printf(c"// argc=%d\n", argc)
-    printf(c"// argv=%d\n", argv.cast[Int])
-
+    for(i <- 0 until argc) {
+      printf(c"// argv=%s\n", argv(i))
+    }
+    //-------------------------------------
     val long_options = malloc(sizeof[option] * 12).cast[Ptr[option]]
     long_options( 0) = new option(c"help",               0, null,   'h')
     long_options( 1) = new option(c"link",               1, null,   'l')
@@ -138,7 +109,7 @@ object Main {
 
     def loopOptions: Unit = {
       while(true) {
-        val c = getopt_long(_argc, argv, c"l:o:m:beT:uc:r:S", long_options, option_index)
+        val c = getopt_long(_argc, argv, c"hl:o:m:beT:uc:r:S", long_options, option_index)
         c match {
           case 'l' => cargs.opt_link               = cargs.opt_link :+ optarg //TODO: new LinkInfo(optarg, LinkType.Dynamic)
           case 'o' => cargs.opt_output             = Some(optarg)
