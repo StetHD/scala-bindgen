@@ -19,11 +19,11 @@ object Main {
 
   import Debug._ //FIXME: remove
 
-  def usage: Unit = {
+  def usage(program: String): Unit = {
     println("Generate C bindings for Scala Native.")
     println("Usage:")
-    println("  bindgen [options] <file> [-- <clang-args>...]")
-    println("  bindgen (-h | --help)")
+    println(s"  ${program} [options] <file> [-- <clang-args>...]")
+    println(s"  ${program} (-h | --help)")
     println("Options:")
     println("  <clang-args>                 Options passed directly to clang.")
     println("  -h, --help                   Display this help message.")
@@ -76,7 +76,7 @@ object Main {
     //-------------------------------------
     printf(c"// argc=%d\n", argc)
     for(i <- 0 until argc) {
-      printf(c"// argv=%s\n", argv(i))
+      printf(c"// argv[%d]=%s\n", i, argv(i))
     }
     //-------------------------------------
     val long_options = malloc(sizeof[option] * 12).cast[Ptr[option]]
@@ -121,10 +121,10 @@ object Main {
           case 'u' => cargs.opt_use_core           = true
           case 'r' => cargs.opt_remove_prefix      = Some(optarg)
           case 'S' => cargs.opt_no_scala_enums     = true
-          case 'h' => usage; System.exit(0)
-          case '?' => usage; System.exit(0)
+          case 'h' => usage(fromCString(argv(0))); System.exit(0)
+          case '?' => usage(fromCString(argv(0))); System.exit(0)
           case -1  => return
-          case _   => usage; System.exit(1)
+          case _   => usage(fromCString(argv(0))); System.exit(1)
         }
       }
     }
