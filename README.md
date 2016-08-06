@@ -5,10 +5,13 @@
 
 **This is work in progress, in early inception phase.**
 
-A native binding generator for the [Scala] language.
+A native binding generator for the [Scala] language.<br/> 
 See also: [Scala Native] and this [getting started guide].
 
 ``scala-bindgen`` was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
+
+Similar products:
+1. [JOGL GlueGen] generates Java bindings (JNI wrappers) from C header files.
 
 ## For the impatient
 
@@ -93,7 +96,7 @@ Observe that anything after double hyphen "--" are passed to [Clang].
 [getting started guide]: http://github.com/scala-native/scala-native-example
 [Clay's bindgen]: http://github.com/jckarter/clay/blob/master/tools/bindgen.clay
 [Rust's bindgen]: http://github.com/crabtw/rust-bindgen
-
+[JOGL GlueGen]: https://jogamp.org/gluegen/www
 [Clang]: http://clang.llvm.org/
 [LLVM]: http://llvm.org
 [stdlib.scala]: http://github.com/scala-native/scala-native/blob/master/nativelib/src/main/scala/scala/scalanative/native/stdlib.scala
