@@ -33,5 +33,5 @@ env:
 
 script:
   - java -version
-  - sbt cleanCache cleanLocal clean nativeLink
+  - sbt 'cleanCache' 'cleanLocal' 'clean' 'nativeLink'
   - bindgen/target/scala-2.11/bindgen-out test/getopt.h
