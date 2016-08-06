@@ -33,7 +33,7 @@ In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant [Clang] comp
 At the moment ``scala-bindgen`` only generates bindings for ``C`` language.
 
 
-### Usage
+## Usage
 
 **NOTE:** This section is about ***intents***, not really on features implemented and working properly.
 
