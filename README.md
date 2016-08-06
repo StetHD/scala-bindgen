@@ -5,13 +5,13 @@
 **This is work in progress, in early inception phase.**
 
 A native binding generator for the [Scala] language.
-See also: [Scala Native]
+See also: [Scala Native] and this [getting started guide].
 
-scala-bindgen was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
+``scala-bindgen`` was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
 
 ## For the impatient
 
-Please define LLVM_HOME and LD_LIBRARY_PATH similar to the example below:
+In case you have installed [Clang] by hand, please define LLVM_HOME and LD_LIBRARY_PATH similar to the example below. Otherwise, you can simply skip these lines.
 
     $ export LLVM_HOME=/opt/developer/clang+llvm-3.8.0-x86_64-linux-gnu-debian8
     $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LLVM_HOME/lib
@@ -21,10 +21,10 @@ Now you can build and run:
     $ sbt nativeLink
     $ bindgen/target/scala-2.11/bindgen-out test/getopt.h
 
+
 ## How it works
 
-In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant [Clang] compiler (from [LLVM] infrastructure) for achieving the task of transforming 
-``C`` header files into ``Scala`` bindings. For examples on how ``Scala`` bindings look like, please see [stdlib.scala].
+In a nutshell, ``scala-bindgen`` lays on the shoulders of the giant [Clang] compiler (from [LLVM] infrastructure) for achieving the task of transforming ``C`` header files into ``Scala`` bindings. For examples on how ``Scala`` bindings look like, please see [stdlib.scala].
 
 1. ``scala-bindgen`` employs ``Clang`` (from LLVM infrastructure) for parsing ``C`` header files;
 2. ``Clang`` builds an AST which represents all sources parsed;
@@ -39,25 +39,21 @@ At the moment ``scala-bindgen`` only generates bindings for ``C`` language.
 
     $ scala-bindgen [arguments] <header-file> [-- [clang-arguments]]
 
+**Example**: Tries to find ``stdlib.h`` in the current directory and, if not successful, tries on "well known locations". Generates bindings on the current directory, on file ``stdlib.scala``. Passes ``--verbose`` flag a number of times so that it increases the logging level, displaying which "well known locations" are those:
+
+    $ scala-bindgen -vvv stdlib.h
+
 #### the necessary help screen
 
     $ scala-bindgen --help
 
 #### generate bindings on a given output directory
 
-    $ mkdir -p fake/src
-    $ scala-bindgen -O fake/src test/getopt.h
+    $ scala-bindgen -O cmdline/src/main/scala test/getopt.h
 
 #### same as before, but passes the include directory to ``Clang``
 
-    $ mkdir -p fake/src
-    $ scala-bindgen -O fake/src getopt.h -- -I test
-
-Tries to find ``stdlib.h`` in the current directory and, if not successful, tries on "well known locations".
-Generates bindings on the current directory, on file ``stdlib.scala``.
-Passes ``--verbose`` flag a number of times so that it increases the logging level, displaying which "well known locations" are those:
-
-    $ scala-bindgen -vvv stdlib.h
+    $ scala-bindgen -O cmdline/src/main/scala getopt.h -- -I test
 
 #### defines a package name for the generated bindings
 
@@ -93,6 +89,7 @@ Scala Native is distributed under [the Scala license].
 
 [Scala]: http://scala-lang.org
 [Scala Native]: http://github.com/scala-native/scala-native
+[getting started guide]: http://github.com/scala-native/scala-native-example
 [Clay's bindgen]: http://github.com/jckarter/clay/blob/master/tools/bindgen.clay
 [Rust's bindgen]: http://github.com/crabtw/rust-bindgen
 
