@@ -1,6 +1,7 @@
 ## Overview
 
 [![Join the chat at https://gitter.im/frgomes/scala-bindgen](https://badges.gitter.im/frgomes/scala-bindgen.svg)](https://gitter.im/frgomes/scala-bindgen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/frgomes/scala-bindgen.svg?branch=master)](https://travis-ci.org/frgomes/scala-bindgen)
 
 **This is work in progress, in early inception phase.**
 

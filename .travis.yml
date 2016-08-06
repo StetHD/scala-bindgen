@@ -32,4 +32,3 @@ cache:
 script:
   - java -version
   - sbt 'clean' 'nativeLink'
-  - bindgen/target/scala-2.11/bindgen-out test/getopt.h
