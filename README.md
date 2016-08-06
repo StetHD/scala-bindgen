@@ -79,7 +79,7 @@ Observe that anything after double hyphen "--" are passed to [Clang].
 
 ## License
 
-Scala Native is distributed under [the Scala license].
+``scala-bindgen`` is distributed under [the Scala license].
 
 
 [Stack Overflow with tag scala-bindgen]: http://stackoverflow.com/questions/tagged/scala-bindgen
