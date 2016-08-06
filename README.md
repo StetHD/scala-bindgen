@@ -11,7 +11,9 @@ See also: [Scala Native] and this [getting started guide].
 ``scala-bindgen`` was originally ported from [Rust's bindgen], which was originally ported from [Clay's bindgen].
 
 Similar products:
-1. [JOGL GlueGen] generates Java bindings (JNI wrappers) from C header files.
+
+1. [JOGL GlueGen] generates Java bindings (JNI wrappers) from C header files. ([repositories](https://github.com/sgothel/))
+
 
 ## For the impatient
 
