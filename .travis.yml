@@ -29,9 +29,7 @@ cache:
   directories:
     - $HOME/.ivy2/cache
 
-env:
-
 script:
   - java -version
-  - sbt 'cleanCache' 'cleanLocal' 'clean' 'nativeLink'
+  - sbt 'clean' 'nativeLink'
   - bindgen/target/scala-2.11/bindgen-out test/getopt.h
