@@ -47,7 +47,7 @@ At the moment ``scala-bindgen`` only generates bindings for ``C`` language.
 
     $ scala-bindgen --help
 
-#### generate bindings on a given output directory
+#### generates bindings on a given output directory
 
     $ scala-bindgen -O cmdline/src/main/scala test/getopt.h
 
