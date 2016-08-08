@@ -64,12 +64,11 @@ object Main {
 
 
   def main(args: Array[String]): Unit = {
-    val argc = args.length
-    //see: https://github.com/scala-native/scala-native/issues/266
-    val argv: Ptr[CString] = malloc(sizeof[CString] * argc+1).cast[Ptr[CString]]
-    argv(0) = "bindgen"
+    val argc = args.length + 1
+    val argv: Ptr[CString] = malloc(sizeof[CString] * argc).cast[Ptr[CString]]
+    argv(0) = "bindgen" //see: https://github.com/scala-native/scala-native/issues/266
     args.zipWithIndex.foreach { case (arg, idx) => argv(idx+1) = args(idx) }
-    main(argc+1, argv)
+    main(argc, argv)
   }
 
   def main(argc: CInt, argv: Ptr[CString]): CInt = {
